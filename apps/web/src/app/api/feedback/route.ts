@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { checkRateLimit } from "@/auth/rate-limit";
+import { isDatabaseConfigured } from "@/db";
 import { submitFeedback, MAX_MESSAGE_LENGTH } from "@/feedback";
 
 const submitSchema = z.object({
@@ -11,6 +12,18 @@ const submitSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+	if (!isDatabaseConfigured()) {
+		return NextResponse.json(
+			{
+				error: "Feedback is not configured",
+				message:
+					"This OpenCut instance runs without a database, so feedback " +
+					"cannot be stored. Set DATABASE_URL to enable it.",
+			},
+			{ status: 503 },
+		);
+	}
+
 	const { limited } = await checkRateLimit({ request });
 	if (limited) {
 		return NextResponse.json({ error: "Too many requests" }, { status: 429 });

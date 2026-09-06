@@ -196,13 +196,27 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
+		const freesoundToken = webEnv.FREESOUND_API_KEY;
+
+		if (!freesoundToken) {
+			return NextResponse.json(
+				{
+					error: "Sound search is not configured",
+					message:
+						"This OpenCut instance has no Freesound API key, so sound " +
+						"search is disabled. Set FREESOUND_API_KEY to enable it.",
+				},
+				{ status: 503 },
+			);
+		}
+
 		const baseUrl = "https://freesound.org/apiv2/search/text/";
 
 		const sortParam = buildSortParameter({ query, sort });
 
 		const params = new URLSearchParams({
 			query: query || "",
-			token: webEnv.FREESOUND_API_KEY,
+			token: freesoundToken,
 			page: page.toString(),
 			page_size: pageSize.toString(),
 			sort: sortParam,
